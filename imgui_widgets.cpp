@@ -5341,8 +5341,7 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* l
     const float hit_padding_x = style.TouchExtraPadding.x;
     const float arrow_hit_x1 = (text_pos.x - text_offset_x) - hit_padding_x;
     const float arrow_hit_x2 = (text_pos.x - text_offset_x) + (g.FontSize + padding.x * 2.0f) + hit_padding_x;
-    if (window != g.HoveredWindow || !(g.IO.MousePos.x >= arrow_hit_x1 && g.IO.MousePos.x < arrow_hit_x2))
-        button_flags |= ImGuiButtonFlags_NoKeyModifiers;
+    const bool mouse_x_on_arrow = (g.IO.MousePos.x >= arrow_hit_x1 && g.IO.MousePos.x < arrow_hit_x2);
 
     bool selected = (flags & ImGuiTreeNodeFlags_Selected) != 0;
     const bool was_selected = selected;
@@ -5351,12 +5350,15 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* l
     const bool is_multi_select = g.MultiSelectEnabled;
     if (is_multi_select)
     {
-        flags |= ImGuiTreeNodeFlags_OpenOnArrow;
         MultiSelectItemHeader(id, &selected);
         button_flags |= ImGuiButtonFlags_NoHoveredOnFocus;
 
+        // We absolutely need to distinguish open vs select so this is the default when multi-select is enabled.
+        flags |= ImGuiTreeNodeFlags_OpenOnArrow;
+
         // To handle drag and drop of multiple items we need to avoid clearing selection on click.
         // Enabling this test makes actions using CTRL+SHIFT delay their effect on the mouse release which is annoying, but it allows drag and drop of multiple items.
+        // FIXME-MULTISELECT: Consider opt-in for drag and drop behavior in ImGuiMultiSelectFlags?
         if (!selected || (g.ActiveId == id && g.ActiveIdHasBeenPressedBefore))
             button_flags |= ImGuiButtonFlags_PressedOnClick;
         else
@@ -5364,7 +5366,8 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* l
     }
     else
     {
-        button_flags |= ImGuiButtonFlags_NoKeyModifiers;
+        if (window != g.HoveredWindow || !mouse_x_on_arrow)
+            button_flags |= ImGuiButtonFlags_NoKeyModifiers;
     }
 
     bool hovered, held;
@@ -5377,7 +5380,7 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* l
             if ((flags & (ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick)) == 0 || (g.NavActivateId == id && !is_multi_select))
                 toggled = true;
             if (flags & ImGuiTreeNodeFlags_OpenOnArrow)
-                toggled |= (g.IO.MousePos.x >= arrow_hit_x1 && g.IO.MousePos.x < arrow_hit_x2) && (!g.NavDisableMouseHover); // Lightweight equivalent of IsMouseHoveringRect() since ButtonBehavior() already did the job
+                toggled |= mouse_x_on_arrow && !g.NavDisableMouseHover; // Lightweight equivalent of IsMouseHoveringRect() since ButtonBehavior() already did the job
             if ((flags & ImGuiTreeNodeFlags_OpenOnDoubleClick) && g.IO.MouseDoubleClicked[0])
                 toggled = true;
             if (g.DragDropActive && is_open) // When using Drag and Drop "hold to open" we keep the node highlighted after opening, but never close it again.
