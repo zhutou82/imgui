@@ -22,6 +22,10 @@ project "imgui"
 	filter "system:windows"
 		systemversion "latest"
 		staticruntime "On"
+
+ 	filter "configurations:Debug"
+		runtime "Debug"
+		symbols "on"   
 		
 	
 	filter "configurations:Release"
