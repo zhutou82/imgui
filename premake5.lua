@@ -20,10 +20,13 @@ project "imgui"
 	}
 	
 	filter "system:windows"
-		systemversion "10.0.14393.0"
+		systemversion "latest"
 		staticruntime "On"
 		
-	
+    filter "configurations:Debug"
+        runtime "Debug"
+        symbols "on"	
+    
 	filter "configurations:Release"
 		runtime "Release"
 		optimize "on"
