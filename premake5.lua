@@ -19,11 +19,10 @@ project "imgui"
 		"imstb_truetype.h"
 	}
 	
- 	filter "configurations:Debug"
-		runtime "Debug"
-		symbols "on"   
+	filter "system:windows"
+		systemversion "latest"
+		staticruntime "On"
 		
-	
 	filter "configurations:Release"
 		runtime "Release"
 		optimize "on"
